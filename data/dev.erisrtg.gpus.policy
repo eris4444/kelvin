@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>GPU-S</vendor>
+  <icon_name>dev.erisrtg.GpuS</icon_name>
+
+  <!-- Runtime PM on/auto for the NVIDIA GPU. Reversible and low risk, so the
+       user at the active local session may do it without a password (the
+       same trust level power-profiles-daemon gives profile switching). -->
+  <action id="dev.erisrtg.gpus.runtime-pm">
+    <description>Change NVIDIA GPU runtime power management</description>
+    <message>GPU-S wants to change whether the NVIDIA GPU may power down when idle</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/lib/gpu-s/gpu-s-pm-helper</annotate>
+  </action>
+
+  <!-- ASUS GPU MUX. Changes which GPU drives the display after the next
+       boot, so it always requires administrator authentication. -->
+  <action id="dev.erisrtg.gpus.mux">
+    <description>Switch the ASUS GPU MUX (applies after reboot)</description>
+    <message>GPU-S wants to change which GPU drives the laptop display after the next reboot</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/lib/gpu-s/gpu-s-mux-helper</annotate>
+  </action>
+
+  <!-- Persistent battery charge threshold (UPower hwdb override in /etc).
+       A system configuration change, so it requires administrator
+       authentication (remembered for a few minutes). -->
+  <action id="dev.erisrtg.gpus.battery">
+    <description>Change the battery charge threshold</description>
+    <message>GPU-S wants to change the battery charge limit</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/lib/gpu-s/gpu-s-battery-helper</annotate>
+  </action>
+</policyconfig>

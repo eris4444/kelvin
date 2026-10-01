@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#261846"/>
+      <stop offset="1" stop-color="#0b0716"/>
+    </linearGradient>
+    <linearGradient id="chip" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22d3c5"/>
+      <stop offset="1" stop-color="#e2456a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.46" r="0.55">
+      <stop offset="0" stop-color="#22d3c5" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#22d3c5" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#bg)"/>
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#glow)"/>
+  <rect x="8.5" y="8.5" width="111" height="111" rx="27.5" fill="none" stroke="#ffffff" stroke-opacity="0.09"/>
+  <g stroke="url(#chip)" stroke-width="5" stroke-linecap="round">
+    <path d="M50 25v10M64 25v10M78 25v10M50 93v10M64 93v10M78 93v10M25 50h10M25 64h10M25 78h10M93 50h10M93 64h10M93 78h10"/>
+  </g>
+  <rect x="36" y="36" width="56" height="56" rx="13" fill="#130c26" stroke="url(#chip)" stroke-width="5"/>
+  <path d="M68 45 51 68h12l-3.5 15L78 59H66z" fill="url(#chip)"/>
+</svg>

@@ -1,0 +1,88 @@
+#!/bin/bash
+# GPU-S privileged helper: NVIDIA runtime power management.
+#
+# Runs as root through pkexec (polkit action dev.erisrtg.gpus.runtime-pm).
+# It does exactly one thing: write "on" or "auto" to the kernel runtime-PM
+# control (power/control) of NVIDIA display-class PCI functions.
+#
+#   on    keep the GPU powered (D0); the kernel will not runtime-suspend it
+#   auto  let the kernel/NVIDIA driver power the GPU down (D3cold) when idle;
+#         this is the NVIDIA driver's own default
+#
+# With "auto", the other PCI functions of the same NVIDIA card (its HD-audio
+# controller, for example) are also set to "auto" if they are not already,
+# because the card can only reach D3cold when every function is suspended.
+#
+# It never unbinds drivers, unloads modules, touches displays or any other
+# device, and never changes anything on its own.
+#
+# Usage: gpu-s-pm-helper on|auto [PCI_ADDRESS]
+
+set -euo pipefail
+export PATH=/usr/bin:/bin
+readonly SYSFS_PCI=/sys/bus/pci/devices
+
+die() {
+  local code=$1
+  shift
+  echo "gpu-s-pm-helper: $*" >&2
+  exit "$code"
+}
+
+(($# >= 1 && $# <= 2)) || die 2 "usage: gpu-s-pm-helper on|auto [PCI_ADDRESS]"
+
+mode=$1
+case $mode in
+on | auto) ;;
+*) die 2 "invalid mode '$mode' (expected 'on' or 'auto')" ;;
+esac
+
+target=${2:-}
+if [[ -n $target && ! $target =~ ^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]$ ]]; then
+  die 2 "invalid PCI address '$target'"
+fi
+
+((EUID == 0)) || die 1 "must be run as root through pkexec"
+
+is_nvidia_function() {
+  [[ -r $1/vendor && $(<"$1/vendor") == 0x10de ]]
+}
+
+is_nvidia_gpu() {
+  is_nvidia_function "$1" && [[ -r $1/class && $(<"$1/class") == 0x03* ]]
+}
+
+set_control() {
+  local ctl=$1 value=$2
+  [[ $(<"$ctl") == "$value" ]] && return 0
+  printf '%s' "$value" >"$ctl" 2>/dev/null || return 1
+  [[ $(<"$ctl") == "$value" ]]
+}
+
+gpus=()
+for dev in "$SYSFS_PCI"/*; do
+  is_nvidia_gpu "$dev" || continue
+  [[ -z $target || ${dev##*/} == "$target" ]] || continue
+  gpus+=("$dev")
+done
+
+((${#gpus[@]} > 0)) || die 3 "no NVIDIA GPU found${target:+ at $target}"
+
+for dev in "${gpus[@]}"; do
+  address=${dev##*/}
+  ctl=$dev/power/control
+  [[ -w $ctl ]] || die 4 "runtime power management is not available for $address"
+
+  if [[ $mode == auto ]]; then
+    slot=${address%.*}
+    for fn in "$SYSFS_PCI/$slot".*; do
+      [[ $fn == "$dev" ]] && continue
+      is_nvidia_function "$fn" || continue
+      [[ -w $fn/power/control ]] || continue
+      set_control "$fn/power/control" auto || die 5 "the kernel rejected runtime PM 'auto' for ${fn##*/}"
+    done
+  fi
+
+  set_control "$ctl" "$mode" || die 5 "the kernel rejected runtime PM '$mode' for $address"
+  echo "$address runtime_pm=$mode status=$(<"$dev/power/runtime_status")"
+done

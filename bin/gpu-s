@@ -1,0 +1,15 @@
+#!/usr/bin/python3
+"""GPU-S launcher: finds the gpu_s package (source tree or /usr/lib/gpu-s)."""
+
+import os
+import sys
+
+here = os.path.dirname(os.path.realpath(__file__))
+for root in (os.path.join(here, os.pardir), "/usr/lib/gpu-s"):
+    if os.path.isfile(os.path.join(root, "gpu_s", "__init__.py")):
+        sys.path.insert(0, os.path.abspath(root))
+        break
+
+from gpu_s.cli import main  # noqa: E402
+
+sys.exit(main(sys.argv[1:]))
