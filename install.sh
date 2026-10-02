@@ -1,5 +1,5 @@
 #!/bin/bash
-# GPU-S installer.
+# Kelvin installer.
 #
 # Builds an Arch package from this directory and installs it with pacman, so
 # every system file (command, root helpers, polkit policy, desktop entry,
@@ -30,22 +30,28 @@ trap 'rm -rf "$work"' EXIT
 
 echo "==> Building package"
 BUILDDIR="$work/build" PKGDEST="$work" SRCDEST="$work" makepkg -f --noconfirm >/dev/null
-pkg=$(find "$work" -maxdepth 1 -name 'gpu-s-*.pkg.tar.*' | head -1)
+pkg=$(find "$work" -maxdepth 1 -name 'kelvin-*.pkg.tar.*' | head -1)
 [[ -n $pkg ]] || { echo "Package build failed." >&2; exit 1; }
 
 echo "==> Installing $(basename "$pkg") (administrator password required)"
-as_root pacman -U --noconfirm "$pkg"
+if [[ $(pacman -Qq gpu-s 2>/dev/null) == gpu-s ]]; then  # not just "provided by kelvin"
+  # Kelvin was called GPU-S: stop the old app and swap the packages in one step.
+  gpu-s quit >/dev/null 2>&1 || true
+  as_root bash -c 'pacman -Rdd --noconfirm gpu-s >/dev/null && pacman -U --noconfirm "$1"' _ "$pkg"
+else
+  as_root pacman -U --noconfirm "$pkg"
+fi
 
-# Restart a running GPU-S so it picks up the installed version.
-gpu-s quit >/dev/null 2>&1 || true
+# Restart a running Kelvin so it picks up the installed version.
+kelvin quit >/dev/null 2>&1 || true
 
 cat <<'EOF'
 
-==> GPU-S installed.
+==> Kelvin installed.
 
-  gpu-s            open the window (also in the app launcher as "GPU-S")
-  gpu-s status     terminal summary
-  gpu-s help       all commands
+  kelvin            open the window (also in the app launcher as "Kelvin")
+  kelvin status     terminal summary
+  kelvin help       all commands
 
 Start-at-login is enabled on first launch (Settings → Startup to turn it off).
 EOF

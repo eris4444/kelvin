@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>Kelvin</vendor>
+  <icon_name>dev.erisrtg.Kelvin</icon_name>
+
+  <!-- Runtime PM on/auto for the NVIDIA GPU. Reversible and low risk, so the
+       user at the active local session may do it without a password (the
+       same trust level power-profiles-daemon gives profile switching). -->
+  <action id="dev.erisrtg.kelvin.runtime-pm">
+    <description>Change NVIDIA GPU runtime power management</description>
+    <message>Kelvin wants to change whether the NVIDIA GPU may power down when idle</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/lib/kelvin/kelvin-pm-helper</annotate>
+  </action>
+
+  <!-- ASUS GPU MUX. Changes which GPU drives the display after the next
+       boot, so it always requires administrator authentication. -->
+  <action id="dev.erisrtg.kelvin.mux">
+    <description>Switch the ASUS GPU MUX (applies after reboot)</description>
+    <message>Kelvin wants to change which GPU drives the laptop display after the next reboot</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/lib/kelvin/kelvin-mux-helper</annotate>
+  </action>
+
+  <!-- ASUS custom fan curves. The helper enforces minimum fan speeds at high
+       temperatures, and the curve must be re-applied automatically at login
+       and after thermal-profile changes, so the active local user may do it
+       without a password (like switching power profiles). -->
+  <action id="dev.erisrtg.kelvin.fans">
+    <description>Change the laptop fan curves</description>
+    <message>Kelvin wants to change how fast the CPU/GPU fans spin</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/lib/kelvin/kelvin-fan-helper</annotate>
+  </action>
+
+  <!-- Persistent battery charge threshold (UPower hwdb override in /etc).
+       A system configuration change, so it requires administrator
+       authentication (remembered for a few minutes). -->
+  <action id="dev.erisrtg.kelvin.battery">
+    <description>Change the battery charge threshold</description>
+    <message>Kelvin wants to change the battery charge limit</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/lib/kelvin/kelvin-battery-helper</annotate>
+  </action>
+</policyconfig>

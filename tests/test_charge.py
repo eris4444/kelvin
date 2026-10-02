@@ -10,8 +10,8 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from gpu_s import charge  # noqa: E402
-from gpu_s.agent import charge_transition  # noqa: E402
+from kelvin import charge  # noqa: E402
+from kelvin.agent import charge_transition  # noqa: E402
 
 
 def info(**kw) -> charge.ChargeInfo:

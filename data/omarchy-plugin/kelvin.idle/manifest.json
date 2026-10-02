@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "kelvin.idle",
+  "name": "Kelvin idle",
+  "version": "2.0.0",
+  "author": "Kelvin",
+  "description": "Screen-off and sleep-on-idle timers configured by Kelvin (~/.config/kelvin/idle.json). Respects idle inhibitors and Omarchy's stay-awake switch.",
+  "kinds": [
+    "service"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "Service.qml"
+  }
+}

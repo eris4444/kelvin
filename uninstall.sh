@@ -1,13 +1,13 @@
 #!/bin/bash
-# GPU-S uninstaller.
+# Kelvin uninstaller.
 #
-#   ./uninstall.sh            revert everything GPU-S changed and remove the package
-#   ./uninstall.sh --purge    ...and also delete ~/.config/gpu-s and ~/.local/state/gpu-s
+#   ./uninstall.sh            revert everything Kelvin changed and remove the package
+#   ./uninstall.sh --purge    ...and also delete ~/.config/kelvin and ~/.local/state/kelvin
 #   ./uninstall.sh --keep-mux leave the ASUS GPU MUX as it is now
 #
-# "Revert" means: stop GPU-S, remove the Hyprland session tuning (if enabled),
+# "Revert" means: stop Kelvin, remove the Hyprland session tuning (if enabled),
 # remove the autostart entry, set NVIDIA runtime PM back to the driver default
-# ('auto') and, if GPU-S switched the ASUS MUX, switch it back (applies after
+# ('auto') and, if Kelvin switched the ASUS MUX, switch it back (applies after
 # the next reboot; nothing reboots automatically).
 
 set -euo pipefail
@@ -26,21 +26,21 @@ as_root() {
   if [[ -t 0 ]]; then sudo "$@"; else pkexec "$@"; fi
 }
 
-if command -v gpu-s >/dev/null; then
-  echo "==> Reverting GPU-S changes"
-  gpu-s reset "${reset_args[@]}" || echo "   (some changes could not be reverted; see above)"
+if command -v kelvin >/dev/null; then
+  echo "==> Reverting Kelvin changes"
+  kelvin reset "${reset_args[@]}" || echo "   (some changes could not be reverted; see above)"
 fi
 
-rm -f "${XDG_CONFIG_HOME:-$HOME/.config}/autostart/dev.erisrtg.GpuS.desktop"
+rm -f "${XDG_CONFIG_HOME:-$HOME/.config}/autostart/dev.erisrtg.Kelvin.desktop"
 
-if pacman -Qq gpu-s >/dev/null 2>&1; then
-  echo "==> Removing the gpu-s package (administrator password required)"
-  as_root pacman -R --noconfirm gpu-s
+if pacman -Qq kelvin >/dev/null 2>&1; then
+  echo "==> Removing the kelvin package (administrator password required)"
+  as_root pacman -R --noconfirm kelvin
 fi
 
 if $purge; then
-  rm -rf "${XDG_CONFIG_HOME:-$HOME/.config}/gpu-s" "${XDG_STATE_HOME:-$HOME/.local/state}/gpu-s"
-  echo "==> Removed GPU-S configuration and state"
+  rm -rf "${XDG_CONFIG_HOME:-$HOME/.config}/kelvin" "${XDG_STATE_HOME:-$HOME/.local/state}/kelvin"
+  echo "==> Removed Kelvin configuration and state"
 fi
 
-echo "==> GPU-S uninstalled."
+echo "==> Kelvin uninstalled."

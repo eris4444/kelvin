@@ -21,9 +21,9 @@ from gi.repository import GLib  # noqa: E402
 
 from fakesys import NV, FakeSystem  # noqa: E402
 
-from gpu_s import agent, config, hardware, paths, privilege  # noqa: E402
-from gpu_s.battery import PowerSupply  # noqa: E402
-from gpu_s.policy import Mode  # noqa: E402
+from kelvin import agent, config, hardware, paths, privilege  # noqa: E402
+from kelvin.battery import PowerSupply  # noqa: E402
+from kelvin.policy import Mode  # noqa: E402
 
 
 class AgentTests(unittest.TestCase):

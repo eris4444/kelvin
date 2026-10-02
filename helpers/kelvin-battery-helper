@@ -1,0 +1,88 @@
+#!/bin/bash
+# Kelvin privileged helper: persistent battery charge thresholds.
+#
+# Runs as root through pkexec (polkit action dev.erisrtg.kelvin.battery).
+#
+# Kelvin does not write battery thresholds to sysfs itself. UPower already
+# manages them on this system: it applies CHARGE_LIMIT (from udev hwdb) to the
+# kernel's charge_control_*_threshold when its charge limit is enabled, and
+# re-applies it at boot and after resume. This helper only maintains UPower's
+# documented local override, /etc/udev/hwdb.d/61-kelvin-battery.hwdb, and asks
+# udev to refresh the battery so UPower picks the new value up.
+#
+# Usage:
+#   kelvin-battery-helper set BATTERY START END   START may be "_" (not supported)
+#   kelvin-battery-helper clear BATTERY            remove the override (UPower default)
+
+set -euo pipefail
+export PATH=/usr/bin:/bin
+
+readonly OVERRIDE=/etc/udev/hwdb.d/61-kelvin-battery.hwdb
+readonly LEGACY_OVERRIDE=/etc/udev/hwdb.d/61-gpu-s-battery.hwdb  # written by GPU-S (pre-rename)
+readonly MIN_END=50
+
+die() {
+  local code=$1
+  shift
+  echo "kelvin-battery-helper: $*" >&2
+  exit "$code"
+}
+
+(($# >= 2)) || die 2 "usage: kelvin-battery-helper set BATTERY START END | clear BATTERY"
+action=$1 battery=$2
+[[ $battery =~ ^BAT[0-9]$ ]] || die 2 "invalid battery name '$battery'"
+supply=/sys/class/power_supply/$battery
+[[ -r $supply/type && $(<"$supply/type") == Battery ]] || die 3 "$battery is not a battery"
+[[ -e $supply/charge_control_end_threshold ]] || die 4 "$battery has no kernel charge threshold"
+
+case $action in
+set)
+  (($# == 4)) || die 2 "usage: kelvin-battery-helper set BATTERY START END"
+  start=$3 end=$4
+  [[ $end =~ ^[0-9]{1,3}$ ]] && ((end >= MIN_END && end <= 100)) || die 2 "end threshold must be $MIN_END-100"
+  if [[ $start != _ ]]; then
+    [[ -e $supply/charge_control_start_threshold ]] || die 4 "$battery has no start threshold"
+    [[ $start =~ ^[0-9]{1,2}$ ]] && ((start < end)) || die 2 "start threshold must be below the end threshold"
+  fi
+  ;;
+clear)
+  (($# == 2)) || die 2 "usage: kelvin-battery-helper clear BATTERY"
+  ;;
+*) die 2 "invalid action '$action'" ;;
+esac
+
+((EUID == 0)) || die 1 "must be run as root through pkexec"
+
+model=$(<"$supply/model_name") || model=
+[[ $model =~ ^[A-Za-z0-9._-]+$ ]] || model='*'
+
+if [[ $action == set ]]; then
+  # Never fight another local CHARGE_LIMIT override.
+  for file in /etc/udev/hwdb.d/*.hwdb; do
+    [[ -e $file && $file != "$OVERRIDE" && $file != "$LEGACY_OVERRIDE" ]] || continue
+    if grep -q 'CHARGE_LIMIT' "$file"; then
+      die 6 "$file already sets CHARGE_LIMIT; not overriding it"
+    fi
+  done
+  mkdir -p /etc/udev/hwdb.d
+  stage=$(mktemp "$OVERRIDE.XXXXXX")
+  cat >"$stage" <<EOF
+# Managed by Kelvin: battery charge thresholds applied by UPower.
+# Change them with Kelvin or "kelvin battery limit N"; remove this file to return
+# to UPower's default. See /usr/lib/udev/hwdb.d/60-upower-battery.hwdb.
+battery:$battery:$model:dmi:*
+ CHARGE_LIMIT=$start,$end
+EOF
+  chmod 0644 "$stage"
+  mv -f "$stage" "$OVERRIDE"
+  rm -f "$LEGACY_OVERRIDE"
+else
+  rm -f "$OVERRIDE" "$LEGACY_OVERRIDE"
+fi
+
+systemd-hwdb update
+udevadm trigger --action=change --settle "$supply"
+# UPower reads CHARGE_LIMIT when it creates the battery device, so restart it
+# (exactly what happens at boot); it then re-applies the limit if enabled.
+systemctl try-restart upower.service
+echo "$action $battery ${start:-} ${end:-}"

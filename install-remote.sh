@@ -1,9 +1,9 @@
 #!/bin/bash
-# One-line GPU-S installer:
+# One-line Kelvin installer:
 #
-#   curl -fsSL https://raw.githubusercontent.com/eris4444/gpu-s/main/install-remote.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/eris4444/kelvin/main/install-remote.sh | bash
 #
-# Clones (or updates) the GPU-S source to ~/.local/share/gpu-s and runs its
+# Clones (or updates) the Kelvin source to ~/.local/share/kelvin and runs its
 # own install.sh, which builds a pacman package and installs it — see that
 # script and the repo's README for exactly what it does. This wrapper does
 # nothing else: no privileged steps happen until install.sh's own pacman
@@ -11,8 +11,8 @@
 
 set -euo pipefail
 
-REPO_URL=${GPU_S_REPO_URL:-https://github.com/eris4444/gpu-s.git}
-DEST=${GPU_S_SRC_DIR:-"${XDG_DATA_HOME:-$HOME/.local/share}/gpu-s"}
+REPO_URL=${KELVIN_REPO_URL:-https://github.com/eris4444/kelvin.git}
+DEST=${KELVIN_SRC_DIR:-"${XDG_DATA_HOME:-$HOME/.local/share}/kelvin"}
 
 if ((EUID == 0)); then
   echo "Run this as your normal user, not root." >&2
@@ -27,7 +27,7 @@ if [[ -d $DEST/.git ]]; then
   git -C "$DEST" checkout --quiet main
   git -C "$DEST" reset --quiet --hard origin/main
 else
-  echo "==> Cloning GPU-S to $DEST"
+  echo "==> Cloning Kelvin to $DEST"
   git clone --quiet "$REPO_URL" "$DEST"
 fi
 

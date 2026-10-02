@@ -18,8 +18,8 @@ expect() {
   fi
 }
 
-pm=helpers/gpu-s-pm-helper
-mux=helpers/gpu-s-mux-helper
+pm=helpers/kelvin-pm-helper
+mux=helpers/kelvin-mux-helper
 
 expect 2 "pm: no args" bash "$pm"
 expect 2 "pm: bad mode" bash "$pm" off
@@ -30,7 +30,7 @@ expect 1 "pm: refuses to run unprivileged" bash "$pm" on
 expect 2 "mux: no args" bash "$mux"
 expect 2 "mux: bad target" bash "$mux" integrated
 
-bat=helpers/gpu-s-battery-helper
+bat=helpers/kelvin-battery-helper
 expect 2 "battery: no args" bash "$bat"
 expect 2 "battery: bad battery name" bash "$bat" set ../../etc 50 80
 expect 2 "battery: bad action" bash "$bat" write BAT1
@@ -44,6 +44,21 @@ if [[ -e /sys/class/power_supply/BAT1/charge_control_end_threshold ]]; then
   fi
   expect 1 "battery: valid set refused unprivileged" bash "$bat" set BAT1 _ 80
 fi
+
+fan=helpers/kelvin-fan-helper
+safe=50:0,58:38,64:64,70:102,75:140,80:179,85:217,90:255
+expect 2 "fan: no args" bash "$fan"
+expect 2 "fan: bad fan" bash "$fan" set cpu1 "$safe"
+expect 2 "fan: bad action" bash "$fan" write cpu
+expect 2 "fan: seven points" bash "$fan" set cpu 50:0,58:38,64:64,70:102,75:140,80:179,85:217
+expect 2 "fan: injection" bash "$fan" set cpu '50:0;id'
+expect 2 "fan: temps not increasing" bash "$fan" set cpu 50:0,50:38,64:64,70:102,75:140,80:179,85:217,90:255
+expect 2 "fan: speed decreasing" bash "$fan" set cpu 50:40,58:38,64:64,70:102,75:140,80:179,85:217,90:255
+expect 7 "fan: too slow at 70C" bash "$fan" set cpu 50:0,58:20,64:30,70:40,75:140,80:179,85:217,90:255
+expect 7 "fan: too slow at 80C" bash "$fan" set cpu 50:0,58:38,64:64,70:102,75:110,80:120,85:217,90:255
+expect 7 "fan: last point too hot" bash "$fan" set cpu 50:0,58:38,64:64,70:102,75:140,80:179,90:217,99:255
+expect 1 "fan: safe curve refused unprivileged" bash "$fan" set cpu "$safe"
+expect 1 "fan: auto refused unprivileged" bash "$fan" auto gpu
 
 if [[ -e /sys/class/firmware-attributes/asus-armoury/attributes/gpu_mux_mode ]]; then
   other=$([[ $(</sys/class/firmware-attributes/asus-armoury/attributes/gpu_mux_mode/current_value) == 1 ]] && echo discrete || echo hybrid)

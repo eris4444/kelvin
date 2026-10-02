@@ -17,8 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from fakesys import NV, FakeSystem  # noqa: E402
 
-from gpu_s import battery, config, hardware, monitor, nvml, paths, policy, procs  # noqa: E402
-from gpu_s.policy import Mode  # noqa: E402
+from kelvin import battery, config, hardware, monitor, nvml, paths, policy, procs  # noqa: E402
+from kelvin.policy import Mode  # noqa: E402
 
 
 class FakeSysTestCase(unittest.TestCase):
@@ -129,7 +129,7 @@ class PolicyTests(FakeSysTestCase):
         self.assertIs(policy.effective_mode(facts, policy.assess(facts), "auto"), Mode.ALWAYS_ON)
 
     def test_plan_writes_only_when_needed(self):
-        from gpu_s import power_manager
+        from kelvin import power_manager
 
         facts = self.make(mode="hybrid", control="auto")
         a = policy.assess(facts)
@@ -172,7 +172,7 @@ class TargetModeTests(unittest.TestCase):
 
 
 class MonitorGateTests(FakeSysTestCase):
-    """GPU-S must never be the reason the GPU stays awake."""
+    """Kelvin must never be the reason the GPU stays awake."""
 
     def sample(self, util=0.0):
         return nvml.GpuSample(0, "GPU", "610", 40, 5.0, 80, 95, "P8", util, 0, 400, 4096, 210, 405, "Disabled")
@@ -203,7 +203,7 @@ class MonitorGateTests(FakeSysTestCase):
         query.assert_not_called()
         self.assertIn("Power Saving", snap.sensor_note)
 
-    def test_pinned_gpu_samples_every_time(self):
+    def test_pinned_kelvinamples_every_time(self):
         self.make(mode="discrete")
         m = monitor.Monitor()
         with mock.patch.object(nvml, "query", return_value=self.sample(0.0)) as query:
@@ -244,7 +244,7 @@ class ParserTests(unittest.TestCase):
 
     def test_script_names(self):
         self.assertEqual(procs._script_name(["python3", "-m", "claude_f", "--x"]), "claude_f")
-        self.assertEqual(procs._script_name(["python3", "-u", "/usr/bin/gpu-s"]), "gpu-s")
+        self.assertEqual(procs._script_name(["python3", "-u", "/usr/bin/kelvin"]), "kelvin")
         self.assertEqual(procs.pretty_name("firefox"), "Firefox")
         self.assertEqual(procs.pretty_name("Xwayland"), "Xwayland")
 
@@ -277,7 +277,7 @@ class BatteryTests(FakeSysTestCase):
 
 class SessionTuningTests(unittest.TestCase):
     def test_enable_disable_restores_config(self):
-        from gpu_s import session_tuning
+        from kelvin import session_tuning
 
         with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ, {"XDG_CONFIG_HOME": tmp}):
             hypr = Path(tmp) / "hypr"
@@ -287,19 +287,19 @@ class SessionTuningTests(unittest.TestCase):
             ok, _ = session_tuning.enable(validate=False)
             self.assertTrue(ok)
             self.assertTrue(session_tuning.is_enabled())
-            self.assertIn('pcall(require, "hypr.gpu-s")', (hypr / "hyprland.lua").read_text())
-            self.assertTrue(list(hypr.glob("hyprland.lua.bak.gpu-s.*")))
+            self.assertIn('pcall(require, "hypr.kelvin")', (hypr / "hyprland.lua").read_text())
+            self.assertTrue(list(hypr.glob("hyprland.lua.bak.kelvin.*")))
             session_tuning.enable(validate=False)  # idempotent
-            self.assertEqual((hypr / "hyprland.lua").read_text().count("hypr.gpu-s"), 1)
+            self.assertEqual((hypr / "hyprland.lua").read_text().count("hypr.kelvin"), 1)
             session_tuning.disable(validate=False)
             self.assertFalse(session_tuning.is_enabled())
             self.assertEqual((hypr / "hyprland.lua").read_text(), original)
-            self.assertFalse((hypr / "gpu-s.lua").exists())
+            self.assertFalse((hypr / "kelvin.lua").exists())
 
 
 class TrayTests(unittest.TestCase):
     def test_icon_and_menu(self):
-        from gpu_s import tray
+        from kelvin import tray
 
         status = tray.TrayStatus(state="Active", mode=Mode.ALWAYS_ON, supported={m: m is Mode.ALWAYS_ON for m in Mode}, level="forced")
         data = tray.draw_icon(22, status)
@@ -315,7 +315,7 @@ class TrayTests(unittest.TestCase):
         layout = GLib.Variant("(u(ia{sv}av))", (1, icon._layout(items, 0, -1)))
         revision, (root, _props, children) = layout.unpack()
         self.assertEqual(root, 0)
-        self.assertEqual(len(children), 8)
+        self.assertEqual(len(children), 10)
         radios = {i: items[i][0] for i in (41, 42, 43)}
         self.assertEqual(radios[42]["toggle-state"].unpack(), 1)
         self.assertFalse(radios[41]["enabled"].unpack())
@@ -323,7 +323,7 @@ class TrayTests(unittest.TestCase):
 
 class ThemeTests(unittest.TestCase):
     def test_palette_contrast(self):
-        from gpu_s.ui import theme
+        from kelvin.ui import theme
 
         with tempfile.TemporaryDirectory() as tmp:
             d = Path(tmp) / "theme"

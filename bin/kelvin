@@ -1,0 +1,15 @@
+#!/usr/bin/python3
+"""Kelvin launcher: finds the kelvin package (source tree or /usr/lib/kelvin)."""
+
+import os
+import sys
+
+here = os.path.dirname(os.path.realpath(__file__))
+for root in (os.path.join(here, os.pardir), "/usr/lib/kelvin"):
+    if os.path.isfile(os.path.join(root, "kelvin", "__init__.py")):
+        sys.path.insert(0, os.path.abspath(root))
+        break
+
+from kelvin.cli import main  # noqa: E402
+
+sys.exit(main(sys.argv[1:]))

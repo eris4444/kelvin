@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Kelvin
+GenericName=Power & Thermal Control
+Comment=NVIDIA GPU power, battery charge limit, fans, CPU temperatures and sleep timers
+Exec=kelvin
+Icon=dev.erisrtg.Kelvin
+Terminal=false
+Categories=System;Monitor;HardwareSettings;
+Keywords=nvidia;gpu;optimus;prime;hybrid;mux;battery;charge;fan;cooling;temperature;cpu;sleep;suspend;lock;idle;gpu-s;
+StartupNotify=true
+StartupWMClass=dev.erisrtg.Kelvin
+SingleMainWindow=true

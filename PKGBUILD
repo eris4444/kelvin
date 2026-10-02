@@ -1,9 +1,12 @@
-# Local package for GPU-S. Built by install.sh; every installed system file is
-# owned by this package, so `pacman -R gpu-s` removes GPU-S cleanly.
-pkgname=gpu-s
-pkgver=1.1.0
+# Local package for Kelvin. Built by install.sh; every installed system file is
+# owned by this package, so `pacman -R kelvin` removes Kelvin cleanly.
+pkgname=kelvin
+pkgver=2.0.0
 pkgrel=1
-pkgdesc="NVIDIA hybrid-graphics GPU power manager for Omarchy (GTK4/libadwaita)"
+pkgdesc="Power & thermal control centre for Omarchy laptops: NVIDIA GPU, battery limit, fans, CPU, sleep (GTK4)"
+provides=('gpu-s')
+conflicts=('gpu-s')
+replaces=('gpu-s')
 arch=('any')
 license=('MIT')
 depends=(
